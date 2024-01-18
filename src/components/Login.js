@@ -146,7 +146,7 @@ const Login = ({setIsAuthenticated,setUserInfo}) => {
                             
                         </div>
                         <br></br>
-                        {/* <Link to="/">don't have an account? Create here</Link> */}
+                        <Link to="/">don't have an account? Create here</Link>
                     </form>
                 </Card>
             </div>

@@ -6,7 +6,7 @@ import { Card } from 'primereact/card';
 import Swal from 'sweetalert2';
 import BookingList from './BookingList';
 
-const BookTest = ({userInfo}) => {
+const BookTest = ({ userInfo }) => {
   const [tests, setTests] = useState([{ testName: '', slotName: '', date: null, lab: '' }]);
   const [slots, setSlots] = useState(null);
   const [bookingList, setBookingList] = useState(null);
@@ -49,10 +49,43 @@ const BookTest = ({userInfo}) => {
         // Check if the response is successful (status code 200)
         if (response.ok) {
           // Parse the response data as JSON
-          const data = await response.json();
+          let data = await response.json();
 
           // Update the state with the fetched slots
-          setBookingList(data);
+          const dataBooking = data.map((booking) => {
+            // Add an extra field to each booking
+
+            // Convert the input date string to a Date object
+            const inputDate = new Date(booking.booking_date);
+
+            // Get today's date
+            const todayDate = new Date();
+
+            // Compare the dates
+            if (inputDate < todayDate) {
+              const newBooking = {
+                ...booking,  // Copy existing fields
+                status: 'Expired',  // Add the new field with a desired value
+              };
+              return newBooking;
+            } else if (inputDate.toDateString() === todayDate.toDateString()) {
+              const newBooking = {
+                ...booking,  // Copy existing fields
+                status: 'Ongoing',  // Add the new field with a desired value
+              };
+              return newBooking;
+            } else {
+              const newBooking = {
+                ...booking,  // Copy existing fields
+                status: 'Upcoming',  // Add the new field with a desired value
+              };
+              return newBooking;
+            }
+          });
+
+          // Now dataBooking contains the modified array with the extra field
+
+          setBookingList(dataBooking);
           //console.log(data);
         } else {
           // Handle errors if the response status is not OK
@@ -129,17 +162,17 @@ const BookTest = ({userInfo}) => {
       }
     });
     let p_id;
-      
+
     const uploadPrescription = async () => {
       try {
         const formData = new FormData();
         formData.append('file', uploadedFile);
-  
+
         const response = await fetch('http://localhost:8080/api/prescription/upload', {
           method: 'POST',
           body: formData,
         });
-  
+
         if (response.ok) {
           await response.text().then(data => {
             p_id = JSON.parse(data).prescription_id;
@@ -151,7 +184,7 @@ const BookTest = ({userInfo}) => {
         console.error('Error uploading prescription:', error.message);
       }
     };
-  
+
     const bookTest = async () => {
       try {
         // Use Promise.all to wait for all promises to resolve
@@ -161,7 +194,7 @@ const BookTest = ({userInfo}) => {
             month: '2-digit',
             year: 'numeric',
           });
-    
+
           return {
             "choose_test": test.testName,
             "choose_slot": test.slotName,
@@ -170,16 +203,16 @@ const BookTest = ({userInfo}) => {
             "p_id": p_id
           };
         });
-    
+
         // Wait for all promises to resolve
         const booking = await Promise.all(bookingPromises);
-    
+
         console.log(booking);
         let user = {
           "user_id": userInfo.user_id,
           "booking": booking
         }
-    
+
         const response = await fetch('http://localhost:8080/api/diagnosticTest/booking_test', {
           method: 'POST',
           headers: {
@@ -187,12 +220,18 @@ const BookTest = ({userInfo}) => {
           },
           body: JSON.stringify(user),
         });
-    
+
         if (response.ok) {
           setTests([{ testName: '', slotName: '', date: null, lab: '' }]);
           setUploadedFile(null);
           console.log('Book test successful');
-          Swal.close();
+          Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "Your Booking is Successful",
+            showConfirmButton: false,
+            timer: 1500
+          });
         } else {
           console.error('Failed to book test. Status:', response.status);
         }
@@ -201,13 +240,13 @@ const BookTest = ({userInfo}) => {
         console.error('Error booking test:', error.message);
       }
     };
-    
-  
+
+
     await uploadPrescription();
     await bookTest();
   };
-  
-  
+
+
 
   const handleAddTest = () => {
     setTests([...tests, { testName: '', slotName: '', date: null, lab: '' }]);
@@ -248,88 +287,88 @@ const BookTest = ({userInfo}) => {
 
   return (
     <>
-    {userInfo?.user_type==="user"? (
-    <>
-    <div style={{ padding: '20px', overflowY: 'auto', maxHeight: '600px' }}>
-      <Card title="Book Your Diagnostic Tests" style={{ display: "flex", justifyContent: "center", width: '600px', margin: '20px auto' }}>
-        <h1>Test List</h1>
-        <div>
-          <label>Upload Prescription:</label>
-          <input
-            type="file"
-            accept=".jpg, .jpeg, .png, .pdf"
-            onChange={(e) => handleFileUpload(e.target)}
-          />
-        </div>
-        <br></br>
-        {tests.map((test, index) => (
-          <div key={index} className="p-field">
-            <div>
+      {userInfo?.user_type === "user" ? (
+        <>
+          <div style={{ padding: '20px', overflowY: 'auto', maxHeight: '600px' }}>
+            <Card title="Book Your Diagnostic Tests" style={{ display: "flex", justifyContent: "center", width: '600px', margin: '20px auto' }}>
+              <h1>Test List</h1>
               <div>
-                <label>Test Name:</label>&nbsp;
-                <Dropdown
-                  options={testNameOptions}
-                  value={test.testName}
-                  onChange={(e) => handleInputChange(index, 'testName', e.value)}
-                  placeholder="Select Test"
-                />
-                &nbsp;&nbsp;&nbsp;
-                <label>Slot Name:</label>&nbsp;
-                <Dropdown
-                  style={{maxWidth:"200px"}}
-                  options={slotOptions}
-                  value={test.slotName}
-                  onChange={(e) => handleInputChange(index, 'slotName', e.value)}
-                  placeholder="Select Slot"
+                <label>Upload Prescription:</label>
+                <input
+                  type="file"
+                  accept=".jpg, .jpeg, .png, .pdf"
+                  onChange={(e) => handleFileUpload(e.target)}
                 />
               </div>
               <br></br>
-              <div>
+              {tests.map((test, index) => (
+                <div key={index} className="p-field">
+                  <div>
+                    <div>
+                      <label>Test Name:</label>&nbsp;
+                      <Dropdown
+                        options={testNameOptions}
+                        value={test.testName}
+                        onChange={(e) => handleInputChange(index, 'testName', e.value)}
+                        placeholder="Select Test"
+                      />
+                      &nbsp;&nbsp;&nbsp;
+                      <label>Slot Name:</label>&nbsp;
+                      <Dropdown
+                        style={{ maxWidth: "200px" }}
+                        options={slotOptions}
+                        value={test.slotName}
+                        onChange={(e) => handleInputChange(index, 'slotName', e.value)}
+                        placeholder="Select Slot"
+                      />
+                    </div>
+                    <br></br>
+                    <div>
 
-                <label>Select Date:</label>&nbsp;
-                <Calendar
-                  style={{ width: "140px" }}
-                  value={test.date}
-                  onChange={(e) => handleInputChange(index, 'date', e.value)}
-                  showIcon
-                />
+                      <label>Select Date:</label>&nbsp;
+                      <Calendar
+                        style={{ width: "140px" }}
+                        value={test.date}
+                        onChange={(e) => handleInputChange(index, 'date', e.value)}
+                        showIcon
+                      />
 
-                &nbsp;&nbsp;&nbsp;
+                      &nbsp;&nbsp;&nbsp;
 
-                <label>Choose Lab:</label>&nbsp;
-                <Dropdown
-                  options={labOptions}
-                  value={test.lab}
-                  onChange={(e) => handleInputChange(index, 'lab', e.value)}
-                  placeholder="Select Lab"
-                />
+                      <label>Choose Lab:</label>&nbsp;
+                      <Dropdown
+                        options={labOptions}
+                        value={test.lab}
+                        onChange={(e) => handleInputChange(index, 'lab', e.value)}
+                        placeholder="Select Lab"
+                      />
 
-              </div>
-            </div>
+                    </div>
+                  </div>
 
-            <div style={{ margin: "10px 0px 10px 0px", display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                label="Delete"
-                icon="pi pi-trash"
-                className="p-button-danger"
-                onClick={() => handleDeleteTest(index)}
-              />
-            </div>
+                  <div style={{ margin: "10px 0px 10px 0px", display: "flex", justifyContent: "flex-end" }}>
+                    <Button
+                      label="Delete"
+                      icon="pi pi-trash"
+                      className="p-button-danger"
+                      onClick={() => handleDeleteTest(index)}
+                    />
+                  </div>
+                </div>
+              ))}
+              <br></br>
+              <Button label="Add Test" onClick={handleAddTest} /> &nbsp;&nbsp;
+              <Button severity="success" label="Submit" onClick={handleSubmit} />
+              <br></br>
+
+            </Card>
           </div>
-        ))}
-        <br></br>
-        <Button label="Add Test" onClick={handleAddTest} /> &nbsp;&nbsp;
-        <Button label="Submit" onClick={handleSubmit} />
-        <br></br>
-        
-      </Card>
-    </div>
-    </>
-    ):(
-    <>
-     <BookingList bookings={bookingList}></BookingList>
-    </>
-    )}
+        </>
+      ) : (
+        <>
+          <BookingList bookings={bookingList}></BookingList>
+        </>
+      )}
     </>
   );
 };

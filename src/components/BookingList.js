@@ -12,12 +12,13 @@ const BookingList = ({ bookings }) => {
             <DataTable value={bookings}>
                 <Column field="booking_id" header="Booking ID"></Column>
                 <Column field="booked_by" header="Booked By"></Column>
-                <Column field="choose_test" header="Choose Test"></Column>
+                <Column field="choose_test" header="Booked Test"></Column>
                 <Column field="booking_date" header="Booking Date"></Column>
-                <Column field="choose_lab" header="Choose Lab"></Column>
-                <Column field="choose_slot" header="Choose Slot"></Column>
-                <Column field="total_price" header="Total Price"></Column>
-                <Column field="p_id" header="Patient ID"></Column>
+                <Column field="choose_lab" header="Booked Lab"></Column>
+                <Column field="choose_slot" header="Booked Slot"></Column>
+                <Column field="total_price" header="Price"></Column>
+                <Column field="p_id" header="Prescription"></Column>
+                <Column field="status" header="Status"></Column>
             </DataTable>
         </div>
     );
